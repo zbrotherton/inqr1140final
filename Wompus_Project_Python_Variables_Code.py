@@ -1,7 +1,3 @@
-
-# Enumeration for SignalType
-from enum import Enum
-
 class SignalType(Enum):
     GLIMMER = "Glimmer"
     BREEZE = "Breeze"
@@ -9,7 +5,7 @@ class SignalType(Enum):
     GOLD = "Gold"
     NONE = "None"
 
-# Point class to represent a square in the grid
+#This is the Point class to represent a square in the grid
 class Point:
     def __init__(self, row: int, col: int, safe: bool = False, confirmed: bool = False, gold: bool = False):
         self.row = row
@@ -21,7 +17,7 @@ class Point:
     def __repr__(self):
         return f"Point(row={self.row}, col={self.col}, safe={self.safe}, confirmed={self.confirmed}, gold={self.gold})"
 
-# Signal class to represent the signal received from a square
+#This is the signal class to represent the signal received from a square
 class Signal:
     def __init__(self, point: Point, signal_type: SignalType):
         self.point = point
@@ -30,14 +26,14 @@ class Signal:
     def __repr__(self):
         return f"Signal(point={self.point}, signal_type={self.signal_type.name})"
 
-# Robot class to manage the robot's state and actions hopefully this is correct????????????????????????????????????????????
+#Robot class to manage the robot's state and actions, hopefully this is correct????????????????????????????????????????????
 class Robot:
     def __init__(self, start_row: int, start_col: int):
         self.current_location = Point(start_row, start_col)
-        self.orientation = 0  # 0: up, 1: right, 2: down, 3: left
+        self.orientation = 0  #0 means up, 1 means right, 2 means down, 3 means left
         self.has_gold = False
         self.wumpus_dead = False
-        self.wumpus_location = None  # Will be a Point when discovered
+        self.wumpus_location = None  #Will be a Point when discovered
 
     def move(self, direction: str):
         if direction == "up":
@@ -57,15 +53,15 @@ class Robot:
             print(f"Shot arrow towards orientation {self.orientation}.")
             self.wumpus_dead = True  # Assuming a hit for simplicity
 
-# Grid: 4x4 list of lists containing Points
+#The following is the grid which is a 4x4 list of lists containing Points
 grid = [[Point(row, col) for col in range(4)] for row in range(4)]
 
-# Stack to track next squares to explore
+#This is the stack to track next squares to explore!!
 next_squares = []
 
-# List to track unconfirmed signals
+#This is the list to track any "unconfirmed" square signals
 unconfirmed_squares = []
 
-# Instantiate the robot at the bottom-left corner (3, 0 in 0-indexed grid)
-robot = Robot(start_row=3, start_col=0)
+#This would instantiate the robot at the bottom-left corner (Im not sure how to make it so that it is 0,0 like we established, we could do a similar thing like 3,0 like what I originally proposed but feel free to change it!:))
+robot = Robot(start_row=, start_col=)
 

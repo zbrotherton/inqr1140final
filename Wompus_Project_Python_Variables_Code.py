@@ -26,7 +26,7 @@ class Signal:
     def __repr__(self):
         return f"Signal(point={self.point}, signal_type={self.signal_type.name})"
 
-#Robot class to manage the robot's state and actions, hopefully this is correct????????????????????????????????????????????
+#Robot class to manage the robot's state and actions
 class Robot:
     def __init__(self, start_row: int, start_col: int):
         self.current_location = Point(start_row, start_col)

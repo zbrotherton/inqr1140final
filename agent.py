@@ -31,7 +31,26 @@ class Agent:
         self.unconfirmed_squares = []
         self.x = 0 
         self.y = 0
+        self.current_location = Point(0, 0)
+        self.has_gold = False
+        self.wumpus_dead = False
+        self.wumpus_location = None 
     ##TODO: define the functions you need here
+
+    def moveTo(self , point):
+        if self.x + 1  == point.col: 
+            return "move_right"
+        if self.y+1 == point.row:
+            return "move_up"
+        if self.x - 1 == point.col:
+            return "move_down"
+        if self.y -1 == point.col:
+            return "move_left"
+    def killWumpus():
+        var = 0
+    def computePermutations():
+        var = 0
+
     def logSignal(self,state):
              safe = True
              for i in range(len(state[0])):
@@ -76,6 +95,21 @@ class Agent:
     '''
     def move(self,state):
         ##TODO: Implement your algorithm here
-        self.logSignal(state)
-        
-        return "move_up"
+        #self.logSignal(state)
+        move = ""
+        while(self.current_location != Point(0,0) and self.has_gold):
+          if(len(self.next_squares) == 0):
+              if self.wumpus_location != None and not self.wumpus_dead:
+                  self.killWumpus()
+              else:
+                  success = self.computePermutations()
+                  if not success:
+                      self.moveTo(Point(0,0))
+
+
+
+          else:
+             move = self.moveTo(self.next_squares.pop())
+             self.logSignal()
+
+        return move

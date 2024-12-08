@@ -1,6 +1,3 @@
-from collections import deque
-from sre_parse import State
-
 class Point:
     def __init__(self, row: int, col: int, safe: bool = False, confirmed: bool = False, gold: bool = False):
         self.row = row
@@ -24,28 +21,66 @@ class Agent:
     def __init__(self,sizex, sizey):
         ##sizex and sizey will give your agent the size of the map
         self.sizex=sizex
-        self.sizey=sizey 
+        self.sizey=sizey
         ##TODO: Put the variables you need for your agents here.
         self.grid = [[Point(row, col) for col in range(4)] for row in range(4)]
         self.next_squares = []
-        self.unconfirmed_squares = []
-        self.x = 0 
+        self.unconfirmed_signals = []
+        self.x = 0
         self.y = 0
         self.current_location = Point(0, 0)
+        self.current_path = []
+        self.current_destination = None
         self.has_gold = False
         self.wumpus_dead = False
-        self.wumpus_location = None 
-    ##TODO: define the functions you need here
+        self.wumpus_location = None
 
-    def moveTo(self , point):
-        if self.x + 1  == point.col: 
+    #helper for BFS
+    def validMove(self, point, visited):
+        if visited[point.row][point.col]:
+            return False
+        if not point.confirmed or not point.safe:
+            return False
+        return True
+
+    def moveTo(self, point):
+        if self.current_location == point:
+            return ""
+        if len(self.current_path) == 0:
+            #BFS SEARCH TODO: FINISH THIS
+            visited = [[False for col in range(4)] for row in range(4)]
+
+            bfs_current = None
+            next_locations = [self.current_location]
+            while len(next_locations) != 0:
+                bfs_current = next_locations.pop()
+                visited[bfs_current.row][bfs_current.col] = True
+
+                if(bfs_current == point):
+                    self.current_destination = None
+                    break
+
+                if self.validMove(Point(bfs_current.row + 1, bfs_current.col), visited):
+                    next_locations.insert(0, Point(bfs_current.row + 1, bfs_current.col))
+                if self.validMove(Point(bfs_current.row - 1, bfs_current.col), visited):
+                    next_locations.insert(0, Point(bfs_current.row - 1, bfs_current.col))
+                if self.validMove(Point(bfs_current.row, bfs_current.col + 1), visited):
+                    next_locations.insert(0, Point(bfs_current.row, bfs_current.col + 1))
+                if self.validMove(Point(bfs_current.row, bfs_current.col - 1), visited):
+                    next_locations.insert(0, Point(bfs_current.row, bfs_current.col - 1))
+
+                self.current_path.append(bfs_current)
+
+        step = self.current_path.pop()
+        if self.current_location.col + 1  == step.col:
             return "move_right"
-        if self.y+1 == point.row:
-            return "move_up"
-        if self.x - 1 == point.col:
-            return "move_down"
-        if self.y -1 == point.col:
+        if self.current_location.col - 1 == step.col:
             return "move_left"
+        if self.current_location.row - 1 == step.row:
+            return "move_up"
+        if self.current_location.row + 1 == step.row:
+            return "move_down"
+
     def killWumpus():
         var = 0
     def computePermutations():
@@ -65,7 +100,7 @@ class Agent:
                           point = self.grid[self.x][self.y]
                           signal = Signal(point,state[0][i])
                           self.unconfirmed_squares.append(signal)
-                          
+
              else:
                   row, col = self.y, self.x
                   directions = [(-1,0), (1,0), (0,-1), (0,1)]
@@ -76,12 +111,12 @@ class Agent:
                           self.grid[r][c].safe = True
                           self.grid[r][c].confirmed = True
                           self.next_squares.append(self.grid[r][c])
-    
+
     '''
-    move(state) will read in the message from the game and return the move the agent will make based on the current information. 
+    move(state) will read in the message from the game and return the move the agent will make based on the current information.
     This is the only function that will be called by the game and the name, param and return must not be changed.
     @param state will be a tuple (messages, 0)      0 is useless here.
-           If you use a board which a list(list(set)) where the set keeps all the information about a node on the map, 
+           If you use a board which a list(list(set)) where the set keeps all the information about a node on the map,
            board[i][j]'s up and down, left and right will be like:
                                                    i=2  *   *   *
                                                    i=1  *   *   *
@@ -97,7 +132,7 @@ class Agent:
         ##TODO: Implement your algorithm here
         #self.logSignal(state)
         move = ""
-        while(self.current_location != Point(0,0) and self.has_gold):
+        if(self.current_location != Point(0,0) and self.has_gold):
           if(len(self.next_squares) == 0):
               if self.wumpus_location != None and not self.wumpus_dead:
                   self.killWumpus()
@@ -105,11 +140,10 @@ class Agent:
                   success = self.computePermutations()
                   if not success:
                       self.moveTo(Point(0,0))
-
-
-
           else:
-             move = self.moveTo(self.next_squares.pop())
-             self.logSignal()
+            if self.current_destination == None:
+                self.current_destination = self.next_squares.pop()
+
+        move = self.moveTo(self.current_destination)
 
         return move

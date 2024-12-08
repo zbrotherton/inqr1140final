@@ -37,6 +37,8 @@ class Agent:
 
     #helper for BFS
     def validMove(self, point, visited):
+        print("Valid Point: ",point)
+        print("visited: ",visited)
         if visited[point.row][point.col]:
             return False
         if not point.confirmed or not point.safe:
@@ -44,6 +46,7 @@ class Agent:
         return True
 
     def moveTo(self, point):
+        print("point: ", point)
         if self.current_location == point:
             return ""
         if len(self.current_path) == 0:
@@ -55,23 +58,27 @@ class Agent:
             while len(next_locations) != 0:
                 bfs_current = next_locations.pop()
                 visited[bfs_current.row][bfs_current.col] = True
+                print("bfs_current: ", bfs_current)
+                if(bfs_current != self.current_location):
+                    self.current_path.append(bfs_current)
 
                 if(bfs_current == point):
                     self.current_destination = None
                     break
 
-                if self.validMove(Point(bfs_current.row + 1, bfs_current.col), visited):
+                if self.validMove(self.grid[bfs_current.row + 1][bfs_current.col], visited):
                     next_locations.insert(0, Point(bfs_current.row + 1, bfs_current.col))
-                if self.validMove(Point(bfs_current.row - 1, bfs_current.col), visited):
+                if self.validMove(self.grid[bfs_current.row - 1][bfs_current.col], visited):
                     next_locations.insert(0, Point(bfs_current.row - 1, bfs_current.col))
-                if self.validMove(Point(bfs_current.row, bfs_current.col + 1), visited):
+                if self.validMove(self.grid[bfs_current.row][bfs_current.col + 1], visited):
                     next_locations.insert(0, Point(bfs_current.row, bfs_current.col + 1))
-                if self.validMove(Point(bfs_current.row, bfs_current.col - 1), visited):
+                if self.validMove(self.grid[bfs_current.row][bfs_current.col - 1], visited):
                     next_locations.insert(0, Point(bfs_current.row, bfs_current.col - 1))
 
-                self.current_path.append(bfs_current)
 
+        print("current path: ", self.current_path)
         step = self.current_path.pop()
+        print("step: ",step)
         if self.current_location.col + 1  == step.col:
             return "move_right"
         if self.current_location.col - 1 == step.col:
@@ -80,6 +87,7 @@ class Agent:
             return "move_up"
         if self.current_location.row + 1 == step.row:
             return "move_down"
+        return "test"
 
     def killWumpus():
         var = 0
@@ -89,19 +97,19 @@ class Agent:
     def logSignal(self,state):
              safe = True
              for i in range(len(state[0])):
+
                  if state[0][i] == "BREEZE" or state[0][i] == "STENCH":
                      safe = False
-                     break
-               #check if there are any signals
-             if not safe:
-                  #create signal object based on received signals
-                  for i in range(len(state[0])):
-                      if state[0][i] == "BREEZE" or state[0][i] == "STENCH":
-                          point = self.grid[self.x][self.y]
-                          signal = Signal(point,state[0][i])
-                          self.unconfirmed_squares.append(signal)
+                     point = self.grid[self.x][self.y]
+                     signal = Signal(point,state[0][i])
+                     self.unconfirmed_squares.append(signal)
 
-             else:
+                 elif state[0][i] == "GLITTER":
+                     point = self.grid[self.x][self.y]
+                     signal = Signal(point,state[0][i])
+                     self.unconfirmed_squares.append(signal)
+               
+             if safe:
                   row, col = self.y, self.x
                   directions = [(-1,0), (1,0), (0,-1), (0,1)]
                   for i in range(len(directions)):
@@ -110,7 +118,9 @@ class Agent:
                       if 0 <= r < self.sizey and 0 <= c < self.sizex:
                           self.grid[r][c].safe = True
                           self.grid[r][c].confirmed = True
-                          self.next_squares.append(self.grid[r][c])
+                          if not self.grid[r][c] in self.next_squares:
+                            self.next_squares.insert(0,self.grid[r][c])
+             print("next squares: ", self.next_squares)             
 
     '''
     move(state) will read in the message from the game and return the move the agent will make based on the current information.
@@ -130,7 +140,7 @@ class Agent:
     '''
     def move(self,state):
         ##TODO: Implement your algorithm here
-        #self.logSignal(state)
+        self.logSignal(state)
         move = ""
         if(self.current_location != Point(0,0) and self.has_gold):
           if(len(self.next_squares) == 0):
@@ -140,10 +150,10 @@ class Agent:
                   success = self.computePermutations()
                   if not success:
                       self.moveTo(Point(0,0))
-          else:
-            if self.current_destination == None:
-                self.current_destination = self.next_squares.pop()
+
+        if self.current_destination == None:
+            self.current_destination = self.next_squares.pop()
 
         move = self.moveTo(self.current_destination)
-
+        print("move: ", move)
         return move

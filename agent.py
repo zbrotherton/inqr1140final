@@ -1,6 +1,3 @@
-from collections import deque
-from sre_parse import State
-
 class Point:
     def __init__(self, row: int, col: int, safe: bool = False, confirmed: bool = False, gold: bool = False):
         self.row = row
@@ -24,39 +21,81 @@ class Agent:
     def __init__(self,sizex, sizey):
         ##sizex and sizey will give your agent the size of the map
         self.sizex=sizex
-        self.sizey=sizey 
+        self.sizey=sizey
         ##TODO: Put the variables you need for your agents here.
         self.grid = [[Point(row, col) for col in range(4)] for row in range(4)]
+        self.grid[0][0].safe = True
+        self.grid[0][0].confirmed = True
         self.next_squares = []
-        self.unconfirmed_squares = []
-        self.x = 0 
-        self.y = 0
-        self.current_location = Point(0, 0)
+        self.unconfirmed_signals = []
+        self.current_location = Point(3, 0)
+        self.current_path = []
+        self.current_destination = None
         self.has_gold = False
         self.wumpus_dead = False
-        self.wumpus_location = None 
-    ##TODO: define the functions you need here
+        self.wumpus_location = None
+        self.unconfirmed_squares = []
+
+    #helper for BFS
+    def validMove(self, point, visited):
+        #print("Valid Point: ",point)
+        #print("visited: ",visited)
+        if visited[point.row][point.col]:
+            return False
+        if not point.confirmed or not point.safe:
+            return False
+        return True
 
     def moveTo(self, point):
-        print(point)
-        if point.row == self.y+1:
-            self.y -= 1
-            print("up")
-            return "move_up"
-        elif point.row == self.y-1:
-            self.y += 1
-            print("down")
-            return "move_down"
-        elif point.col == self.x-1:
-            self.x -= 1
-            print("left")
-            return "move_left"
-        elif point.col == self.x+1:
-            self.x += 1
-            print("right")
+        if self.current_location == point:
+            self.current_path = []
+            return ""
+        if len(self.current_path) == 0:
+            #BFS SEARCH TODO: FINISH THIS
+            visited = [[False for col in range(4)] for row in range(4)]
+
+            bfs_current = None
+            next_locations = [self.current_location]
+            while len(next_locations) != 0:
+                bfs_current = next_locations.pop()
+                visited[bfs_current.row][bfs_current.col] = True
+                if(bfs_current != self.current_location):
+                    self.current_path.append(bfs_current)
+
+                if(bfs_current == point):
+                    self.current_destination = None
+                    break
+
+                if 0 <= bfs_current.row + 1 < 4 and self.validMove(self.grid[bfs_current.row + 1][bfs_current.col], visited):
+                    next_locations.append(self.grid[bfs_current.row + 1][bfs_current.col])
+                if 0 <= bfs_current.row - 1 < 4 and self.validMove(self.grid[bfs_current.row - 1][bfs_current.col], visited):
+                    next_locations.append(self.grid[bfs_current.row - 1][bfs_current.col])
+                if 0 <= bfs_current.col + 1 < 4 and self.validMove(self.grid[bfs_current.row][bfs_current.col + 1], visited):
+                    next_locations.append(self.grid[bfs_current.row][bfs_current.col + 1])
+                if 0 <= bfs_current.col - 1 < 4 and self.validMove(self.grid[bfs_current.row][bfs_current.col - 1], visited):
+                    next_locations.append(self.grid[bfs_current.row][bfs_current.col - 1])
+                print("bfs current: ", bfs_current)
+                print("next loactions: ",next_locations)
+        print("current path",self.current_path)
+        step = self.current_path.pop()
+        print("step", step)
+        if self.current_location.col + 1  == step.col:
+            
+            self.current_location = step
             return "move_right"
-        print("stay")
-        return "stay"
+        if self.current_location.col - 1 == step.col:
+            
+            self.current_location = step
+            return "move_left"
+        if self.current_location.row + 1 == step.row:
+            
+            self.current_location = step
+            return "move_up"
+        if self.current_location.row - 1 == step.row:
+            
+            self.current_location = step
+            return "move_down"
+        return "test"
 
     def killWumpus():
         var = 0
@@ -69,17 +108,18 @@ class Agent:
 
                  if state[0][i] == "BREEZE" or state[0][i] == "STENCH":
                      safe = False
-                     point = self.grid[self.x][self.y]
+                     point = self.current_location
                      signal = Signal(point,state[0][i])
                      self.unconfirmed_squares.append(signal)
 
                  elif state[0][i] == "GLITTER":
-                     point = self.grid[self.x][self.y]
+                     point = self.current_location
                      signal = Signal(point,state[0][i])
                      self.unconfirmed_squares.append(signal)
                
              if safe:
-                  row, col = self.y, self.x
+                  row = self.current_location.row
+                  col = self.current_location.col
                   directions = [(-1,0), (1,0), (0,-1), (0,1)]
                   for i in range(len(directions)):
                       r = row + directions[i][0]
@@ -88,13 +128,14 @@ class Agent:
                           self.grid[r][c].safe = True
                           self.grid[r][c].confirmed = True
                           if not self.grid[r][c] in self.next_squares:
-                            self.next_squares.insert(0,self.grid[r][c])
-    
+                            self.next_squares.append(self.grid[r][c])
+           
+
     '''
-    move(state) will read in the message from the game and return the move the agent will make based on the current information. 
+    move(state) will read in the message from the game and return the move the agent will make based on the current information.
     This is the only function that will be called by the game and the name, param and return must not be changed.
     @param state will be a tuple (messages, 0)      0 is useless here.
-           If you use a board which a list(list(set)) where the set keeps all the information about a node on the map, 
+           If you use a board which a list(list(set)) where the set keeps all the information about a node on the map,
            board[i][j]'s up and down, left and right will be like:
                                                    i=2  *   *   *
                                                    i=1  *   *   *
@@ -109,21 +150,25 @@ class Agent:
     def move(self,state):
         ##TODO: Implement your algorithm here
         self.logSignal(state)
-        move = "move_right"
-        print(len(self.next_squares))
-        print(self.next_squares)
-        #while(self.current_location != Point(0,0) and self.has_gold):
-        if(len(self.next_squares) == 0):
-            if self.wumpus_location != None and not self.wumpus_dead:
-                self.killWumpus()
-            else:
-                success = self.computePermutations()
-                if not success:
-                    self.moveTo(Point(0,0))
+        move = ""
+        if(self.current_location != Point(0,0) and self.has_gold):
+          if(len(self.next_squares) == 0):
+              if self.wumpus_location != None and not self.wumpus_dead:
+                  self.killWumpus()
+              else:
+                  success = self.computePermutations()
+                  if not success:
+                      self.moveTo(Point(0,0))
 
-        else:
-            print("test")
-            move = self.moveTo(self.next_squares.pop(0))
-            self.logSignal(state)
-
+        if self.current_destination == None:
+            self.current_destination = self.next_squares.pop()
+            
+            
+        
+        move = self.moveTo(self.current_destination)
+        print("current location: ", self.current_location)
+        print("current path",self.current_path)
+        print("current destination",self.current_destination)
+        print("destination queue: ", self.next_squares)  
+        print("move: ", move)
         return move
